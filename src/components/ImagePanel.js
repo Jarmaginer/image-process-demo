@@ -176,6 +176,30 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
 
     switch (action) {
       case 'UPLOAD_IMAGE':
+        // If image is already uploaded, show it instead of upload area
+        if (uploadedImage && imageLoaded) {
+          return (
+            <div className="image-display">
+              <canvas ref={canvasRef} className="image-canvas" />
+              <div className="upload-success">
+                <p>✅ 图像上传成功！</p>
+                <button 
+                  className="upload-new-btn"
+                  onClick={handleUploadClick}
+                >
+                  重新上传
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+              />
+            </div>
+          );
+        }
         return (
           <div className="upload-area">
             <div 

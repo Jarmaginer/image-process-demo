@@ -94,6 +94,38 @@
   margin: 4px 0;
 }
 
+/* Upload Success Styles */
+.upload-success {
+  margin-top: 16px;
+  text-align: center;
+  color: #7d8590;
+}
+
+.upload-success p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #58a6ff;
+  font-weight: 500;
+}
+
+.upload-new-btn {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #444c56;
+  border-radius: 4px;
+  color: #7d8590;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.upload-new-btn:hover {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.1);
+}
+
 /* Placeholder Styles */
 .placeholder {
   width: 100%;
