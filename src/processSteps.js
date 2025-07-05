@@ -13,7 +13,7 @@ export const processSteps = [
             { id: 3, status: 'idle', reason: '' }, { id: 4, status: 'idle', reason: '' },
             { id: 5, status: 'idle', reason: '' }, { id: 6, status: 'idle', reason: '' },
             { id: 7, status: 'idle', reason: '' }, { id: 8, status: 'idle', reason: '' },
-            { id: 9, status: 'idle', reason: '' }, { id: 10, status: 'idle', reason: '' },
+            { id: 9, status: 'idle', reason: '' }, { id: 10, status: 'idle', reason: '' },{ id: 11, status: 'idle', reason: '' }, { id: 12, status: 'idle', reason: '' },{ id: 13, status: 'idle', reason: '' }, { id: 14, status: 'idle', reason: '' }
         ]
     },
     {
@@ -21,8 +21,7 @@ export const processSteps = [
         process: "进行第一轮筛选：硬件不匹配。",
         action: "FILTER_NODES",
         nodesToUpdate: [
-            { id: 3, status: 'mismatched', reason: 'GPU型号过旧' },
-            { id: 8, status: 'mismatched', reason: '内存不足' },
+            { id: 8, status: 'mismatched', reason: '内存不足\nCPU占用率 >95%' },
         ]
     },
     {
@@ -30,7 +29,7 @@ export const processSteps = [
         process: "进行第二轮筛选：当前负载过高。",
         action: "FILTER_NODES",
         nodesToUpdate: [
-            { id: 5, status: 'mismatched', reason: 'CPU占用率 >95%' },
+            { id: 5, status: 'mismatched', reason: 'CUDA版本过低' },
         ]
     },
     {
