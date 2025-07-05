@@ -225,11 +225,6 @@ function App() {
         }, 100); // 100ms延迟让第一次动画有时间显示
         break;
 
-      case 'BUILD_DAG':
-        // Show DAG construction
-        setTimeout(() => setSystemState('IDLE'), 800);
-        break;
-
       case 'FINALIZE':
         const allElements = document.querySelectorAll('.node-container');
         const finalTl = gsap.timeline({

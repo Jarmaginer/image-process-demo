@@ -48,12 +48,7 @@ export const processSteps = [
         action: "ASSIGN_TASKS",
     },
     {
-        stage: "阶段六：DAG构建",
-        process: "构建任务依赖图，优化执行顺序。",
-        action: "BUILD_DAG",
-    },
-    {
-        stage: "阶段七：处理完成",
+        stage: "阶段六：处理完成",
         process: "所有图像块处理完毕，正在合并结果。",
         action: "FINALIZE",
     }
