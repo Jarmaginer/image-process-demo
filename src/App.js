@@ -290,12 +290,65 @@ function App() {
     return <NodePanel nodes={nodes} />;
   }
 
+  // 计算进度百分比 - 对齐到space-evenly分布的点
+  const calculateProgress = () => {
+    if (!isTaskStarted) return 0;
+    if (systemState === 'FINISHED') return 100;
+    
+    // space-evenly会把7个点分布在8个等分区间中
+    // 第1个点在1/8位置，第2个点在2/8位置，第3个点在3/8位置...
+    // 所以当前点的位置 = currentStepIndex / 8 * 100
+    
+    const pointPosition = (currentStepIndex / 8) * 100;
+    return pointPosition;
+  };
+
+  // 获取当前步骤描述
+  const getCurrentStepDescription = () => {
+    if (!isTaskStarted) return "等待任务启动...";
+    if (systemState === 'FINISHED') return "所有任务已完成";
+    return `步骤 ${currentStepIndex}/7: ${processSteps[currentStepIndex]?.process || "处理中..."}`;
+  };
+
   return (
     <div className="App">
       <div className="app-header">
         <h1>$ ./image-process-demo --mode=cluster</h1>
         <div className="system-status">
           [STATUS] <span className={`status-${systemState.toLowerCase()}`}>{systemState}</span>
+        </div>
+      </div>
+
+      {/* 顶部进度条区域 */}
+      <div className="progress-section">
+        <div className="progress-info">
+          <span className="progress-label">DTA 分布式任务分配进度</span>
+          <span className="progress-percentage">{calculateProgress()}%</span>
+        </div>
+        <div className="progress-bar-wrapper">
+          <div className="progress-bar-track">
+            <div 
+              className="progress-bar-fill" 
+              style={{ width: `${calculateProgress()}%` }}
+            />
+          </div>
+          <div className="progress-steps">
+            {processSteps.slice(1).map((step, index) => {
+              const stepNumber = index + 1; // 步骤编号，从1开始
+              const isCompleted = stepNumber < currentStepIndex;
+              const isActive = stepNumber === currentStepIndex;
+              
+              return (
+                <div 
+                  key={index}
+                  className={`progress-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
+                />
+              );
+            })}
+          </div>
+        </div>
+        <div className="progress-description">
+          {getCurrentStepDescription()}
         </div>
       </div>
 

@@ -354,7 +354,6 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
             <div className="image-display">
               <canvas ref={canvasRef} className="image-canvas" />
               <div className="upload-success">
-                <p>✅ 图像上传成功！</p>
                 <button 
                   className="upload-new-btn"
                   onClick={handleUploadClick}
@@ -403,8 +402,6 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info">
-                <p>✅ 已生成 {imageBlocks.length} 个图像块</p>
-                <p>🔄 准备分配到节点</p>
               </div>
             )}
           </div>
@@ -416,8 +413,6 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info processing">
-                <p>✅ 已生成 {imageBlocks.length} 个图像块</p>
-                <p>🟢 图像块正在依次分配到节点</p>
               </div>
             )}
           </div>
@@ -429,8 +424,6 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info">
-                <p>✅ 已完成 {imageBlocks.length} 个图像块分配</p>
-                <p>🔗 正在构建任务依赖图</p>
               </div>
             )}
           </div>
@@ -442,8 +435,6 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info">
-                <p>✅ 所有任务已完成分配</p>
-                <p>🎉 图像处理流程完毕</p>
               </div>
             )}
           </div>

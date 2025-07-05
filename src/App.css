@@ -44,6 +44,124 @@ body {
   margin-left: 10px;
 }
 
+/* 顶部进度条区域 */
+.progress-section {
+  background: #1c2128;
+  border: 1px solid #444c56;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  font-family: 'Consolas', monospace;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-label {
+  font-size: 14px;
+  color: #58a6ff;
+  font-weight: 600;
+}
+
+.progress-percentage {
+  font-size: 16px;
+  color: #7dd3fc;
+  font-weight: bold;
+}
+
+.progress-bar-wrapper {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #21262d;
+  border: 1px solid #444c56;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #58a6ff 0%, #7dd3fc 100%);
+  transition: width 0.4s ease;
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-20px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(20px); opacity: 0; }
+}
+
+.progress-steps {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-evenly;
+  padding: 0;
+}
+
+.progress-step {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #21262d;
+  border: 2px solid #444c56;
+  transform: translateY(-50%);
+  transition: all 0.3s ease;
+}
+
+.progress-step.completed {
+  background: #238636;
+  border-color: #2ea043;
+  box-shadow: 0 0 8px rgba(46, 160, 67, 0.4);
+}
+
+.progress-step.active {
+  background: #58a6ff;
+  border-color: #7dd3fc;
+  box-shadow: 0 0 12px rgba(88, 166, 255, 0.6);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.2); }
+}
+
+.progress-description {
+  font-size: 13px;
+  color: #adbac7;
+  line-height: 1.4;
+  padding: 8px 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  font-style: italic;
+}
+
 /* 主要内容区域 - 重新设计布局 */
 .main-content {
   max-width: 100%;
