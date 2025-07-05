@@ -40,7 +40,7 @@ export const processSteps = [
     },
     {
         stage: "阶段四：图像分割",
-        process: "正在将图像切分为16个子任务（4x4网格）...",
+        process: "正在将图像切分为子任务，分配给可用节点...",
         action: "SPLIT_IMAGE",
     },
     {

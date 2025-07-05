@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { gsap } from 'gsap';
 import './ImagePanel.css';
 
 const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }) => {
   const [dragOver, setDragOver] = useState(false);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -36,6 +38,7 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
       const reader = new FileReader();
       reader.onload = (e) => {
         onImageUploaded(e.target.result);
+        setImageLoaded(true);
       };
       reader.readAsDataURL(file);
     }
@@ -53,46 +56,119 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
       const img = new Image();
       
       img.onload = () => {
-        // Set canvas size
-        canvas.width = 400;
-        canvas.height = 300;
+        // Set canvas to larger size
+        canvas.width = 600;
+        canvas.height = 450;
         
-        // Draw image to fit canvas
+        // Clear and draw image to fit canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // Draw grid lines for 4x4 split if in split phase
-        if (currentStep?.action === 'SPLIT_IMAGE') {
-          drawGrid(ctx, canvas.width, canvas.height);
+        // Draw grid lines based on image blocks if in split phase
+        if (currentStep?.action === 'SPLIT_IMAGE' && imageBlocks.length > 0) {
+          animateImageSplit(ctx, canvas.width, canvas.height, imageBlocks);
         }
       };
       
       img.src = uploadedImage;
     }
-  }, [uploadedImage, currentStep]);
+  }, [uploadedImage, currentStep, imageBlocks]);
 
-  const drawGrid = (ctx, width, height) => {
-    ctx.strokeStyle = '#58a6ff';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-
-    // Draw vertical lines
-    for (let i = 1; i < 4; i++) {
-      const x = (width / 4) * i;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-
-    // Draw horizontal lines
-    for (let i = 1; i < 4; i++) {
-      const y = (height / 4) * i;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
+  const animateImageSplit = (ctx, width, height, blocks) => {
+    if (!blocks || blocks.length === 0) return;
+    
+    // Calculate grid dimensions from blocks
+    const maxCol = Math.max(...blocks.map(b => b.col)) + 1;
+    const maxRow = Math.max(...blocks.map(b => b.row)) + 1;
+    
+    const blockWidth = width / maxCol;
+    const blockHeight = height / maxRow;
+    
+    // Create timeline for split animation
+    const tl = gsap.timeline();
+    
+    // First, draw all grid lines with animation
+    tl.add(() => {
+      ctx.strokeStyle = '#58a6ff';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0;
+    });
+    
+    // Animate grid lines appearing
+    tl.to({}, {
+      duration: 1,
+      ease: "power2.out",
+      onUpdate: function() {
+        ctx.globalAlpha = this.progress();
+        ctx.clearRect(0, 0, width, height);
+        
+        // Redraw image
+        const img = new Image();
+        img.onload = () => {
+          ctx.globalAlpha = 1;
+          ctx.drawImage(img, 0, 0, width, height);
+          ctx.globalAlpha = this.progress();
+          
+          // Draw grid
+          ctx.strokeStyle = '#58a6ff';
+          ctx.lineWidth = 3;
+          
+          // Vertical lines
+          for (let i = 1; i < maxCol; i++) {
+            const x = blockWidth * i;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+          }
+          
+          // Horizontal lines
+          for (let i = 1; i < maxRow; i++) {
+            const y = blockHeight * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+        };
+        img.src = uploadedImage;
+      }
+    });
+    
+    // Then animate block labels appearing one by one
+    blocks.forEach((block, index) => {
+      tl.to({}, {
+        duration: 0.3,
+        delay: index * 0.1,
+        ease: "back.out(1.7)",
+        onComplete: () => {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#58a6ff';
+          ctx.font = 'bold 16px Consolas';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          const x = blockWidth * block.col + blockWidth / 2;
+          const y = blockHeight * block.row + blockHeight / 2;
+          
+          // Draw block background
+          ctx.fillStyle = 'rgba(88, 166, 255, 0.15)';
+          ctx.fillRect(
+            blockWidth * block.col + 5,
+            blockHeight * block.row + 5,
+            blockWidth - 10,
+            blockHeight - 10
+          );
+          
+          // Draw block text
+          ctx.fillStyle = '#58a6ff';
+          ctx.fillText(`块${block.id}`, x, y - 10);
+          ctx.font = 'bold 14px Consolas';
+          ctx.fillText(`→节点${block.nodeId}`, x, y + 10);
+        }
+      });
+    });
   };
 
   const renderContent = () => {
@@ -130,17 +206,24 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
       case 'BUILD_DAG':
         return (
           <div className="image-display">
-            <div className="image-title">图像分割预览</div>
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info">
-                <p>已生成 {imageBlocks.length} 个图像块</p>
+                <p>✅ 已生成 {imageBlocks.length} 个图像块</p>
+                <p>🔄 正在分配到 {imageBlocks.length} 个节点</p>
               </div>
             )}
           </div>
         );
 
       default:
+        if (uploadedImage && imageLoaded) {
+          return (
+            <div className="image-display">
+              <canvas ref={canvasRef} className="image-canvas" />
+            </div>
+          );
+        }
         return (
           <div className="placeholder">
             <div className="placeholder-content">
@@ -155,15 +238,7 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
 
   return (
     <div className="image-panel-container">
-      <div className="image-panel-header">
-        <h3>图像处理面板</h3>
-        <div className="image-status">
-          {uploadedImage ? '✅ 图像已加载' : '⏳ 等待上传'}
-        </div>
-      </div>
-      <div className="image-panel-content">
-        {renderContent()}
-      </div>
+      {renderContent()}
     </div>
   );
 };

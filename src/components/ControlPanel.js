@@ -23,24 +23,24 @@ const ControlPanel = ({
         <div className="control-buttons">
           {!isTaskStarted ? (
             // Show START TASK button initially
-            <button
-              className="control-btn start-btn"
-              onClick={onStartTask}
+          <button
+            className="control-btn start-btn"
+            onClick={onStartTask}
               disabled={systemState === 'PROCESSING'}
-            >
-              <span className="btn-icon">▶</span>
-              START_TASK
-            </button>
+          >
+            <span className="btn-icon">▶</span>
+            START_TASK
+          </button>
           ) : (
             // Show NEXT STEP button after task has started
-            <button
+          <button
               className="control-btn start-btn"
               onClick={onNextStep}
               disabled={isFinished || systemState === 'PROCESSING'}
-            >
+          >
               <span className="btn-icon">▶</span>
               NEXT_STEP
-            </button>
+          </button>
           )}
 
           <button

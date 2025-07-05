@@ -78,10 +78,10 @@ function App() {
             });
 
             animationTimelineRef.current = tl;
-          } else {
+      } else {
             setSystemState('IDLE');
-          }
-        }, 100);
+      }
+    }, 100);
         break;
 
       case 'FILTER_NODES':
@@ -148,18 +148,51 @@ function App() {
         break;
 
       case 'SPLIT_IMAGE':
-        // Generate 16 image blocks (4x4 grid)
+        // Generate blocks based on available nodes count
+        const availableNodes = nodes.filter(n => n.status === 'idle');
+        const nodeCount = availableNodes.length;
+        
+        // Calculate grid dimensions that best fit the node count
+        let cols = Math.ceil(Math.sqrt(nodeCount));
+        let rows = Math.ceil(nodeCount / cols);
+        
         const blocks = [];
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < nodeCount; i++) {
           blocks.push({
             id: i + 1,
-            row: Math.floor(i / 4),
-            col: i % 4,
-            status: 'pending'
+            row: Math.floor(i / cols),
+            col: i % cols,
+            status: 'splitting',
+            nodeId: availableNodes[i].id
           });
         }
+        
         setImageBlocks(blocks);
-        setTimeout(() => setSystemState('IDLE'), 1000);
+        
+        // Animate the splitting process
+        setTimeout(() => {
+          // First phase: show splitting animation
+          const canvas = document.querySelector('.image-canvas');
+          if (canvas) {
+            const tl = gsap.timeline({
+              onComplete: () => {
+                // Update blocks to completed state
+                setImageBlocks(prev => prev.map(b => ({ ...b, status: 'ready' })));
+                setSystemState('IDLE');
+              }
+            });
+            
+            // Flash effect to show splitting
+            tl.to(canvas, {
+              filter: 'brightness(1.5)',
+              duration: 0.2,
+              yoyo: true,
+              repeat: 3
+            });
+          } else {
+            setSystemState('IDLE');
+          }
+        }, 500);
         break;
 
       case 'ASSIGN_TASKS':
@@ -230,7 +263,7 @@ function App() {
       const nextIndex = currentStepIndex + 1;
       setCurrentStepIndex(nextIndex);
       executeStep(processSteps[nextIndex], nextIndex);
-    } else {
+              } else {
       setSystemState('FINISHED');
     }
   }, [currentStepIndex, executeStep]);
@@ -270,7 +303,7 @@ function App() {
           <div className="vehicles-container">
             {/* The user's red-boxed area is replaced by this single line */}
             {renderTopPanel()}
-          </div>
+              </div>
           <div className="image-container">
             <ImagePanel 
               currentStep={processSteps[currentStepIndex]}
