@@ -34,13 +34,28 @@ export const processSteps = [
         ]
     },
     {
-        stage: "阶段三：任务分配",
-        process: "正在向匹配的节点分配数据块...",
+        stage: "阶段三：图像上传",
+        process: "请上传需要处理的8K分辨率图像。",
+        action: "UPLOAD_IMAGE",
+    },
+    {
+        stage: "阶段四：图像分割",
+        process: "正在将图像切分为16个子任务（4x4网格）...",
+        action: "SPLIT_IMAGE",
+    },
+    {
+        stage: "阶段五：任务分配",
+        process: "正在将图像块分配给可用节点...",
         action: "ASSIGN_TASKS",
     },
     {
-        stage: "阶段四：处理完成",
-        process: "所有数据块处理完毕，结果已生成。",
+        stage: "阶段六：DAG构建",
+        process: "构建任务依赖图，优化执行顺序。",
+        action: "BUILD_DAG",
+    },
+    {
+        stage: "阶段七：处理完成",
+        process: "所有图像块处理完毕，正在合并结果。",
         action: "FINALIZE",
     }
 ]; 

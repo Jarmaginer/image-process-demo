@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 // import VehiclePanel from './components/VehiclePanel'; // No longer needed
 import NodePanel from './components/NodePanel'; // Our new component
+import ImagePanel from './components/ImagePanel'; // New image processing component
 import ControlPanel from './components/ControlPanel';
 import { processSteps } from './processSteps'; // Our new "script"
 import gsap from 'gsap';
@@ -12,6 +13,8 @@ function App() {
   const [nodes, setNodes] = useState([]);
   const [systemState, setSystemState] = useState('IDLE'); // Re-purposed systemState
   const [isTaskStarted, setIsTaskStarted] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [imageBlocks, setImageBlocks] = useState([]);
   
   // Keep the original config state
   const [config, setConfig] = useState({
@@ -139,8 +142,28 @@ function App() {
         }, 200);
         break;
 
+      case 'UPLOAD_IMAGE':
+        // Wait for user to upload image
+        setSystemState('WAITING_FOR_UPLOAD');
+        break;
+
+      case 'SPLIT_IMAGE':
+        // Generate 16 image blocks (4x4 grid)
+        const blocks = [];
+        for (let i = 0; i < 16; i++) {
+          blocks.push({
+            id: i + 1,
+            row: Math.floor(i / 4),
+            col: i % 4,
+            status: 'pending'
+          });
+        }
+        setImageBlocks(blocks);
+        setTimeout(() => setSystemState('IDLE'), 1000);
+        break;
+
       case 'ASSIGN_TASKS':
-        // For now, just a simple completion animation
+        // Assign blocks to nodes and animate
         const remainingElements = document.querySelectorAll('.node-idle');
         const tl = gsap.timeline({
           onComplete: () => setSystemState('IDLE')
@@ -161,6 +184,11 @@ function App() {
         });
 
         animationTimelineRef.current = tl;
+        break;
+
+      case 'BUILD_DAG':
+        // Show DAG construction
+        setTimeout(() => setSystemState('IDLE'), 800);
         break;
 
       case 'FINALIZE':
@@ -207,6 +235,11 @@ function App() {
     }
   }, [currentStepIndex, executeStep]);
 
+  const handleImageUploaded = useCallback((imageData) => {
+    setUploadedImage(imageData);
+    setSystemState('IDLE');
+  }, []);
+
   const resetSystem = () => {
     clearAnimations();
     setCurrentStepIndex(0);
@@ -237,6 +270,14 @@ function App() {
           <div className="vehicles-container">
             {/* The user's red-boxed area is replaced by this single line */}
             {renderTopPanel()}
+          </div>
+          <div className="image-container">
+            <ImagePanel 
+              currentStep={processSteps[currentStepIndex]}
+              onImageUploaded={handleImageUploaded}
+              uploadedImage={uploadedImage}
+              imageBlocks={imageBlocks}
+            />
           </div>
         </div>
 
