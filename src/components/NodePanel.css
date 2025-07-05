@@ -1,0 +1,18 @@
+.node-panel-container {
+    background-color: #1c2128;
+    border-radius: 6px;
+    border: 1px solid #444c56;
+    padding: 24px;
+    width: 100%;
+    min-height: 400px; /* Ensure it has a decent height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.node-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 nodes per row */
+    gap: 20px;
+    width: 100%;
+} 

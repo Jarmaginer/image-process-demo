@@ -1,0 +1,313 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+import './App.css';
+// import VehiclePanel from './components/VehiclePanel'; // No longer needed
+import NodePanel from './components/NodePanel'; // Our new component
+import ControlPanel from './components/ControlPanel';
+import { processSteps } from './processSteps'; // Our new "script"
+import gsap from 'gsap';
+
+function App() {
+  // New state management for the node processing flow
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [nodes, setNodes] = useState([]);
+  const [systemState, setSystemState] = useState('IDLE'); // Re-purposed systemState
+  const [isTaskStarted, setIsTaskStarted] = useState(false);
+  
+  // Keep the original config state
+  const [config, setConfig] = useState({
+    migrationSpeed: 'NORMAL',
+    compressionLevel: 'HIGH',
+    encryptionEnabled: true,
+    debugMode: false,
+    autoRetry: true,
+    stopOriginalAfterMigration: true
+  });
+
+  const nodeRefs = useRef([]);
+  const animationTimelineRef = useRef(null);
+
+  // Clear any existing animations
+  const clearAnimations = () => {
+    if (animationTimelineRef.current) {
+      animationTimelineRef.current.kill();
+    }
+    gsap.set(".node-container", { clearProps: "all" });
+  };
+
+  const executeStep = useCallback((step, stepIndex) => {
+    setSystemState('PROCESSING');
+    clearAnimations();
+
+    switch (step.action) {
+      case 'INIT_TASK':
+        setNodes([]);
+        setTimeout(() => setSystemState('IDLE'), 500);
+        break;
+
+      case 'SHOW_ALL_NODES':
+        setNodes(step.nodes);
+        // Wait for DOM to update, then animate
+        setTimeout(() => {
+          const nodeElements = document.querySelectorAll('.node-container');
+          if (nodeElements.length > 0) {
+            // Create a timeline for smooth sequential animation
+            const tl = gsap.timeline({
+              onComplete: () => setSystemState('IDLE')
+            });
+            
+            // Set initial state
+            gsap.set(nodeElements, {
+              opacity: 0,
+              scale: 0.3,
+              y: 60,
+              rotation: -10
+            });
+
+            // Animate nodes appearing with stagger - fixed for smooth sequential animation
+            tl.to(nodeElements, {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              rotation: 0,
+              duration: 0.5,
+              stagger: 0.08, // Simple stagger - each node starts 0.08s after the previous
+              ease: "back.out(1.7)"
+            });
+
+            animationTimelineRef.current = tl;
+          } else {
+            setSystemState('IDLE');
+          }
+        }, 100);
+        break;
+
+      case 'FILTER_NODES':
+        const nodesToUpdate = new Set(step.nodesToUpdate.map(u => u.id));
+        
+        // First, update the data to mark nodes as mismatched
+        const updatedNodes = nodes.map(n =>
+          nodesToUpdate.has(n.id) ? { 
+            ...n, 
+            status: 'mismatched', 
+            reason: step.nodesToUpdate.find(u => u.id === n.id).reason 
+          } : n
+        );
+        setNodes(updatedNodes);
+
+        // Then animate the visual changes
+        setTimeout(() => {
+          const mismatchedElements = document.querySelectorAll('.node-mismatched');
+          const matchedElements = document.querySelectorAll('.node-idle');
+          
+          const tl = gsap.timeline({
+            onComplete: () => {
+              // Remove mismatched nodes from state after animation
+              setNodes(currentNodes => currentNodes.filter(n => n.status !== 'mismatched'));
+              setTimeout(() => setSystemState('IDLE'), 300);
+            }
+          });
+
+          // First, highlight the mismatched nodes with a warning effect
+          tl.to(mismatchedElements, {
+            scale: 1.1,
+            borderColor: "#f85149",
+            boxShadow: "0 0 20px rgba(248, 81, 73, 0.6)",
+            duration: 0.4,
+            ease: "power2.out"
+          })
+          // Then make them fade and shrink away
+          .to(mismatchedElements, {
+            opacity: 0,
+            scale: 0.3,
+            y: -30,
+            rotation: 15,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power2.in"
+          }, "+=0.5")
+          // Meanwhile, make the remaining nodes glow slightly
+          .to(matchedElements, {
+            scale: 1.05,
+            boxShadow: "0 0 15px rgba(56, 139, 253, 0.4)",
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1,
+            ease: "power2.inOut"
+          }, "-=0.4");
+
+          animationTimelineRef.current = tl;
+        }, 200);
+        break;
+
+      case 'ASSIGN_TASKS':
+        // For now, just a simple completion animation
+        const remainingElements = document.querySelectorAll('.node-idle');
+        const tl = gsap.timeline({
+          onComplete: () => setSystemState('IDLE')
+        });
+
+        tl.to(remainingElements, {
+          scale: 1.1,
+          boxShadow: "0 0 25px rgba(63, 185, 80, 0.6)",
+          borderColor: "#3fb950",
+          duration: 0.5,
+          stagger: 0.1,
+          ease: "power2.out"
+        })
+        .to(remainingElements, {
+          scale: 1,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+
+        animationTimelineRef.current = tl;
+        break;
+
+      case 'FINALIZE':
+        const allElements = document.querySelectorAll('.node-container');
+        const finalTl = gsap.timeline({
+          onComplete: () => {
+            setNodes([]);
+            setSystemState('FINISHED');
+          }
+        });
+
+        finalTl.to(allElements, {
+          opacity: 0,
+          scale: 0.5,
+          y: 50,
+          rotation: 10,
+          duration: 0.8,
+          stagger: 0.05,
+          ease: "power2.in"
+        });
+
+        animationTimelineRef.current = finalTl;
+        break;
+
+      default:
+        setSystemState('IDLE');
+        break;
+    }
+  }, [nodes]);
+
+  const startTask = useCallback(() => {
+    setIsTaskStarted(true);
+    setCurrentStepIndex(1); // Move to first actual step (SHOW_ALL_NODES)
+    executeStep(processSteps[1], 1);
+  }, [executeStep]);
+
+  const goToNextStep = useCallback(() => {
+    if (currentStepIndex < processSteps.length - 1) {
+      const nextIndex = currentStepIndex + 1;
+      setCurrentStepIndex(nextIndex);
+      executeStep(processSteps[nextIndex], nextIndex);
+    } else {
+      setSystemState('FINISHED');
+    }
+  }, [currentStepIndex, executeStep]);
+
+  const resetSystem = () => {
+    clearAnimations();
+    setCurrentStepIndex(0);
+    setNodes([]);
+    setSystemState('IDLE');
+    setIsTaskStarted(false);
+  };
+  
+  // Don't auto-execute on mount, wait for user to click START TASK
+  // useEffect removed
+
+  // This part of the JSX is what we are replacing
+  const renderTopPanel = () => {
+    return <NodePanel nodes={nodes} />;
+  }
+
+  return (
+    <div className="App">
+      <div className="app-header">
+        <h1>$ ./image-process-demo --mode=cluster</h1>
+        <div className="system-status">
+          [STATUS] <span className={`status-${systemState.toLowerCase()}`}>{systemState}</span>
+        </div>
+      </div>
+
+      <div className="main-content">
+        <div className="top-section">
+          <div className="vehicles-container">
+            {/* The user's red-boxed area is replaced by this single line */}
+            {renderTopPanel()}
+          </div>
+        </div>
+
+        <div className="bottom-section">
+          <div className="left-panel">
+            <ControlPanel
+              onStartTask={startTask}
+              onNextStep={goToNextStep}
+              onReset={resetSystem}
+              systemState={systemState}
+              currentStepIndex={currentStepIndex}
+              totalSteps={processSteps.length}
+              config={config}
+              setConfig={setConfig}
+            />
+          </div>
+
+          <div className="right-panel">
+            {/* The original system monitor and logs are kept for visual consistency */}
+            <div className="system-monitor">
+              <h3>SYSTEM_MONITOR</h3>
+              <div className="monitor-content">
+                <div className="monitor-item">
+                  <span className="monitor-label">NETWORK_TOPOLOGY:</span>
+                  <span className="monitor-value">MESH_ACTIVE</span>
+                </div>
+                <div className="monitor-item">
+                  <span className="monitor-label">TOTAL_VEHICLES:</span>
+                  <span className="monitor-value">2/8</span>
+                </div>
+                <div className="monitor-item">
+                  <span className="monitor-label">UPTIME:</span>
+                  <span className="monitor-value">02:34:12</span>
+                </div>
+                <div className="monitor-item">
+                  <span className="monitor-label">BANDWIDTH_USAGE:</span>
+                  <span className="monitor-value">1.3/10.0 Gbps</span>
+                </div>
+                <div className="monitor-item">
+                  <span className="monitor-label">LAST_MIGRATION:</span>
+                  <span className="monitor-value">--:--:--</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="system-logs">
+              <h3>SYSTEM_LOGS</h3>
+              <div className="logs-content">
+                <div className="log-entry">
+                  <span className="log-time">[INFO]</span>
+                  <span className="log-message">System initialized</span>
+                </div>
+                <div className="log-entry">
+                  <span className="log-time">[INFO]</span>
+                  <span className="log-message">Vehicle A connected</span>
+                </div>
+                <div className="log-entry">
+                  <span className="log-time">[INFO]</span>
+                  <span className="log-message">Vehicle B connected</span>
+                </div>
+                <div className="log-entry">
+                  <span className="log-time">[DEBUG]</span>
+                  <span className="log-message">Network mesh established</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;

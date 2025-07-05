@@ -1,0 +1,234 @@
+/* 开发者风格 - 类似终端界面 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.App {
+  min-height: 100vh;
+  background: #1e1e1e;
+  padding: 20px;
+}
+
+/* 头部样式 - 类似终端标题栏 */
+.app-header {
+  border-bottom: 1px solid #333;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  font-weight: normal;
+  color: #569cd6;
+  margin-bottom: 10px;
+  font-family: 'Consolas', monospace;
+}
+
+.system-status {
+  font-size: 14px;
+  color: #9cdcfe;
+}
+
+.system-status span {
+  color: #ce9178;
+  margin-left: 10px;
+}
+
+/* 主要内容区域 - 重新设计布局 */
+.main-content {
+  max-width: 100%;
+  margin: 0;
+  padding: 20px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 30px;
+  height: calc(100vh - 120px);
+}
+
+.vehicles-container {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.bottom-section {
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: 20px;
+  min-height: 0;
+}
+
+/* 迁移箭头 - 增强显示 */
+.migration-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #6a9955;
+  font-family: monospace;
+  gap: 10px;
+}
+
+.arrow {
+  transition: color 0.3s ease;
+}
+
+.arrow.active {
+  color: #4ec9b0;
+  animation: blink 1s infinite;
+}
+
+.transfer-info {
+  font-size: 10px;
+  color: #808080;
+  text-align: center;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* 左侧面板容器 */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 右侧面板容器 */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 系统监控面板 */
+.system-monitor {
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  padding: 15px;
+  font-family: 'Consolas', monospace;
+  display: flex;
+  flex-direction: column;
+}
+
+.system-monitor h3 {
+  font-size: 14px;
+  color: #569cd6;
+  margin-bottom: 15px;
+  font-weight: normal;
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.monitor-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  padding: 8px;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  gap: 4px;
+}
+
+.monitor-item span:first-child {
+  color: #808080;
+  font-size: 9px;
+}
+
+.monitor-item span:last-child {
+  color: #d4d4d4;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* 日志面板 */
+.logs-panel {
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  padding: 15px;
+  font-family: 'Consolas', monospace;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.logs-panel h3 {
+  font-size: 14px;
+  color: #569cd6;
+  margin-bottom: 15px;
+  font-weight: normal;
+}
+
+.logs-content {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 10px;
+  line-height: 1.3;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  padding: 10px;
+}
+
+.log-entry {
+  color: #d4d4d4;
+  margin-bottom: 3px;
+  font-family: 'Consolas', monospace;
+}
+
+/* 状态样式 - 类似代码高亮 */
+.status-idle { color: #808080; }
+.status-a_running { color: #4ec9b0; }
+.status-a_packaging { color: #dcdcaa; }
+.status-migrating { color: #9cdcfe; }
+.status-b_running { color: #4ec9b0; }
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .bottom-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+
+  .main-content {
+    height: auto;
+    min-height: calc(100vh - 120px);
+  }
+}
+
+@media (max-width: 900px) {
+  .vehicles-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .migration-arrow {
+    transform: rotate(90deg);
+    font-size: 16px;
+  }
+
+  .main-content {
+    padding: 10px;
+  }
+
+  .bottom-section {
+    grid-template-columns: 1fr;
+  }
+}
