@@ -196,27 +196,33 @@ function App() {
         break;
 
       case 'ASSIGN_TASKS':
-        // Assign blocks to nodes and animate
-        const remainingElements = document.querySelectorAll('.node-idle');
-        const tl = gsap.timeline({
-          onComplete: () => setSystemState('IDLE')
-        });
-
-        tl.to(remainingElements, {
-          scale: 1.1,
-          boxShadow: "0 0 25px rgba(63, 185, 80, 0.6)",
-          borderColor: "#3fb950",
-          duration: 0.5,
-          stagger: 0.1,
-          ease: "power2.out"
-        })
-        .to(remainingElements, {
-          scale: 1,
-          duration: 0.3,
-          ease: "power2.out"
-        });
-
-        animationTimelineRef.current = tl;
+        // 两次动画：第一次全部变黄色，第二次依次变绿色
+        const availableNodeIds = nodes.filter(n => n.status === 'idle').map(n => n.id);
+        
+        // 第一次动画：所有可用节点同时变成processing（黄色）
+        setNodes(prevNodes => 
+          prevNodes.map(n => 
+            availableNodeIds.includes(n.id) ? { ...n, status: 'processing' } : n
+          )
+        );
+        
+        // 短暂延迟后，开始第二次动画：依次变成success状态
+        setTimeout(() => {
+          availableNodeIds.forEach((nodeId, index) => {
+            setTimeout(() => {
+              setNodes(prevNodes => 
+                prevNodes.map(n => 
+                  n.id === nodeId ? { ...n, status: 'success' } : n
+                )
+              );
+              
+              // 如果这是最后一个节点，完成步骤
+              if (index === availableNodeIds.length - 1) {
+                setTimeout(() => setSystemState('IDLE'), 200);
+              }
+            }, index * 20); // 20ms间隔 - 与原来的速度一致
+          });
+        }, 100); // 100ms延迟让第一次动画有时间显示
         break;
 
       case 'BUILD_DAG':

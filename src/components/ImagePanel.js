@@ -68,6 +68,18 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
         if (currentStep?.action === 'SPLIT_IMAGE' && imageBlocks.length > 0) {
           animateImageSplit(ctx, canvas.width, canvas.height, imageBlocks);
         }
+        
+        // Draw static grid with blocks for assign/build/finalize phases
+        if (['ASSIGN_TASKS', 'BUILD_DAG', 'FINALIZE'].includes(currentStep?.action) && imageBlocks.length > 0) {
+          drawStaticGrid(ctx, canvas.width, canvas.height, imageBlocks);
+        }
+        
+        // Animate blocks turning green for assign tasks phase
+        if (currentStep?.action === 'ASSIGN_TASKS' && imageBlocks.length > 0) {
+          setTimeout(() => {
+            animateBlocksProcessing(ctx, canvas.width, canvas.height, imageBlocks);
+          }, 500);
+        }
       };
       
       img.src = uploadedImage;
@@ -171,6 +183,166 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
     });
   };
 
+  const drawStaticGrid = (ctx, width, height, blocks) => {
+    if (!blocks || blocks.length === 0) return;
+    
+    // Calculate grid dimensions from blocks
+    const maxCol = Math.max(...blocks.map(b => b.col)) + 1;
+    const maxRow = Math.max(...blocks.map(b => b.row)) + 1;
+    
+    const blockWidth = width / maxCol;
+    const blockHeight = height / maxRow;
+    
+    // Draw grid lines
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    
+    // Vertical lines
+    for (let i = 1; i < maxCol; i++) {
+      const x = blockWidth * i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    
+    // Horizontal lines
+    for (let i = 1; i < maxRow; i++) {
+      const y = blockHeight * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+    
+    // Draw block labels and backgrounds
+    blocks.forEach((block) => {
+      const x = blockWidth * block.col + blockWidth / 2;
+      const y = blockHeight * block.row + blockHeight / 2;
+      
+      // Draw block background
+      ctx.fillStyle = 'rgba(88, 166, 255, 0.15)';
+      ctx.fillRect(
+        blockWidth * block.col + 5,
+        blockHeight * block.row + 5,
+        blockWidth - 10,
+        blockHeight - 10
+      );
+      
+      // Draw block text
+      ctx.fillStyle = '#58a6ff';
+      ctx.font = 'bold 16px Consolas';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`块${block.id}`, x, y - 10);
+      ctx.font = 'bold 14px Consolas';
+      ctx.fillText(`→节点${block.nodeId}`, x, y + 10);
+    });
+  };
+
+  const animateBlocksProcessing = (ctx, width, height, blocks) => {
+    if (!blocks || blocks.length === 0) return;
+    
+    // Calculate grid dimensions from blocks
+    const maxCol = Math.max(...blocks.map(b => b.col)) + 1;
+    const maxRow = Math.max(...blocks.map(b => b.row)) + 1;
+    
+    const blockWidth = width / maxCol;
+    const blockHeight = height / maxRow;
+    
+    // Create timeline for blocks turning green
+    const tl = gsap.timeline();
+    
+    // Animate each block turning green in sequence
+          blocks.forEach((block, index) => {
+        tl.to({}, {
+          duration: 0.02,
+          delay: index * 0.002, // 与左侧节点20ms间隔匹配
+          ease: "power2.out",
+        onStart: () => {
+          // Redraw the image and grid
+          const img = new Image();
+          img.onload = () => {
+            ctx.clearRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Redraw grid lines
+            ctx.strokeStyle = '#58a6ff';
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 1;
+            
+            // Vertical lines
+            for (let i = 1; i < maxCol; i++) {
+              const x = blockWidth * i;
+              ctx.beginPath();
+              ctx.moveTo(x, 0);
+              ctx.lineTo(x, height);
+              ctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let i = 1; i < maxRow; i++) {
+              const y = blockHeight * i;
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(width, y);
+              ctx.stroke();
+            }
+            
+            // Draw all blocks
+            blocks.forEach((b, i) => {
+              const bx = blockWidth * b.col + blockWidth / 2;
+              const by = blockHeight * b.row + blockHeight / 2;
+              
+              // Determine if this block should be green (processed)
+              const isProcessed = i <= index;
+              
+              // Draw block background
+              ctx.fillStyle = isProcessed ? 'rgba(34, 197, 94, 0.25)' : 'rgba(88, 166, 255, 0.15)';
+              ctx.fillRect(
+                blockWidth * b.col + 5,
+                blockHeight * b.row + 5,
+                blockWidth - 10,
+                blockHeight - 10
+              );
+              
+              // Draw block border for processed blocks
+              if (isProcessed) {
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                  blockWidth * b.col + 5,
+                  blockHeight * b.row + 5,
+                  blockWidth - 10,
+                  blockHeight - 10
+                );
+              }
+              
+              // Draw block text
+              ctx.fillStyle = isProcessed ? '#22c55e' : '#58a6ff';
+              ctx.font = 'bold 16px Consolas';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(`块${b.id}`, bx, by - 10);
+              ctx.font = 'bold 14px Consolas';
+              ctx.fillText(`→节点${b.nodeId}`, bx, by + 10);
+              
+              // Add checkmark for processed blocks
+              if (isProcessed) {
+                ctx.font = 'bold 20px Consolas';
+                ctx.fillStyle = '#22c55e';
+                ctx.fillText('✓', bx + blockWidth/3, by - blockHeight/3);
+              }
+            });
+          };
+          img.src = uploadedImage;
+        }
+      });
+    });
+  };
+
   const renderContent = () => {
     const action = currentStep?.action;
 
@@ -226,15 +398,52 @@ const ImagePanel = ({ currentStep, onImageUploaded, uploadedImage, imageBlocks }
         );
 
       case 'SPLIT_IMAGE':
-      case 'ASSIGN_TASKS':
-      case 'BUILD_DAG':
         return (
           <div className="image-display">
             <canvas ref={canvasRef} className="image-canvas" />
             {imageBlocks && imageBlocks.length > 0 && (
               <div className="blocks-info">
                 <p>✅ 已生成 {imageBlocks.length} 个图像块</p>
-                <p>🔄 正在分配到 {imageBlocks.length} 个节点</p>
+                <p>🔄 准备分配到节点</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'ASSIGN_TASKS':
+        return (
+          <div className="image-display">
+            <canvas ref={canvasRef} className="image-canvas" />
+            {imageBlocks && imageBlocks.length > 0 && (
+              <div className="blocks-info processing">
+                <p>✅ 已生成 {imageBlocks.length} 个图像块</p>
+                <p>🟢 图像块正在依次分配到节点</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'BUILD_DAG':
+        return (
+          <div className="image-display">
+            <canvas ref={canvasRef} className="image-canvas" />
+            {imageBlocks && imageBlocks.length > 0 && (
+              <div className="blocks-info">
+                <p>✅ 已完成 {imageBlocks.length} 个图像块分配</p>
+                <p>🔗 正在构建任务依赖图</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'FINALIZE':
+        return (
+          <div className="image-display">
+            <canvas ref={canvasRef} className="image-canvas" />
+            {imageBlocks && imageBlocks.length > 0 && (
+              <div className="blocks-info">
+                <p>✅ 所有任务已完成分配</p>
+                <p>🎉 图像处理流程完毕</p>
               </div>
             )}
           </div>
